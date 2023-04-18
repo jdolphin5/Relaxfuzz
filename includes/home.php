@@ -1,0 +1,411 @@
+<?php
+$p = $_GET['p'];
+	if (empty($p)) {
+		$p = "0";
+	}
+$search = $_GET['search'];
+	if (empty($search)) {
+		$search = "0";
+	}
+switch ($search) {
+	case "0":
+		$selectedMask = "0";
+		break;
+	case "1":
+		$selectedMask = 1;
+		break;
+	case "2":
+		$selectedMask = 2;
+		break;
+	case "3":
+		$selectedMask = 4;
+		break;
+	case "4":
+		$selectedMask = 8;
+		break;
+	case 5:
+		$selectedMask = 16;
+		break;
+	case 6:
+		$selectedMask = 32;
+		break;
+	case 7:
+		$selectedMask = 64;
+		break;
+	case 8:
+		$selectedMask = 128;
+		break;
+	default:
+		//
+}
+?>					<!--could make it such that the user can select videos to fill their set meditation time: playlist or looping-->
+					<!--
+					<div class="main">
+						<div class="mainText">
+							<h1>Introduction</h1>
+							<p>Your one stop shop for meditative background videos. Just choose a video, sit back and relax. Set the timer at the bottom of the page to be notified when you have finished your session. Videos have looping automatically enabled.<br /><br />Let us know what you think <a href="index.php?page=contact">here</a>!
+							</p>
+							<br /><br />
+						</div>
+					</div>
+					<div class="mainGap"></div>
+					-->
+					<div class="main">
+					<div class="mainText">
+						<div class="whole">
+							<?php if ($p == 0) { ?>
+							<p><?php //if($_SESSION['loggedin'] != "true") {?><!--<button class="button">Sign Up for Full-Length Videos</button>--><?php// } ?><br />
+							Your one stop shop for meditation videos. Just select a video, click on the full screen icon, and sit back and relax. Set the timer at the bottom of the page if you will be viewing for a certain amount of time. Videos automatically loop.<br /><br />Let us know what you think <a href="index.php?page=contact">here</a>!
+							</p>
+							<?php } ?>
+						</div>
+						<br />
+						<h1>Videos</h1>
+						<div class="whole">
+							<p>
+							Search by tag: <!--<br />-->
+							<select class="form-select" style="float: none;" name="searchSelect" id="searchSelect" onchange="searchFunc()">
+							  <option value="0" <?php if($search == "0") { echo "selected"; } ?>>All</option>
+							  <option value="1" <?php if($search == 1) { echo "selected"; } ?>>Sunrise</option>
+							  <option value="2" <?php if($search == 2) { echo "selected"; } ?>>Sunset</option>
+							  <option value="3" <?php if($search == 3) { echo "selected"; } ?>>Rain</option>
+							  <option value="4" <?php if($search == 4) { echo "selected"; } ?>>Windy</option>
+							  <option value="5" <?php if($search == 5) { echo "selected"; } ?>>Sunny</option>
+							  <option value="6" <?php if($search == 6) { echo "selected"; } ?>>Underwater</option>
+							  <option value="7" <?php if($search == 7) { echo "selected"; } ?>>Snow</option>
+							  <option value="8" <?php if($search == 8) { echo "selected"; } ?>>360</option>
+							</select>
+							</p>
+						</div>
+						<!--Sunrise, Sunset, Rain, Windy, Sunny, Underwater, Snow-->
+						<!--<p>Tags: Light Rain - Heavy Rain - Storm - Windy - Overcast - Sunset - Sunrise - Waterfall - Underwater - Sunny - Snow</p>-->
+						
+						<!--
+						<div class="whole">
+							Filter by tags: 
+							
+							<form>
+								<!-- drop down menu -->
+								<!-- this can be changed to clickable on/off tags in the future -->
+								<!-- submit -->
+								<!--
+							</form>
+							
+						</div>
+						-->
+						
+						<?php 	
+								//Include config file to connect to the DB
+								require_once "./db/config.php";
+								
+								//get total count of rows
+								if ($search != "0") {
+									$sql1 = "SELECT COUNT(*) AS total FROM videos WHERE (" . $selectedMask . " & tags) = " . $selectedMask;	
+								}
+								else {
+									$sql1 = "SELECT COUNT(*) AS total FROM videos";
+								}
+								if($stmt1 = mysqli_prepare($link, $sql1)) {
+									if(mysqli_stmt_execute($stmt1)) {
+										mysqli_stmt_bind_result($stmt1, $count);
+										mysqli_stmt_fetch($stmt1);
+									}
+								}
+								// Close statement
+								mysqli_stmt_close($stmt1);
+						
+								//$count extracted -> total number of rows in 'videos' table
+								//echo $count;
+						
+								$showCount = 4; //show 10 entries
+								$numPages = $count/$showCount;
+								if ($count % $showCount != 0) {
+									$numPages++;
+								}
+								$row = 0;
+								
+								$dataArray = array();
+						
+								//Prepare a select statement
+								if ($search != "0") {
+									//WHERE (tags & $selectedMask == $selectedMask)
+									$sql = "SELECT id, title, duration, tags, link, rating, author FROM videos WHERE (" . $selectedMask . " & tags) = " . $selectedMask . " ORDER BY rating DESC, id ASC LIMIT " . $p . ", " . $showCount;
+								}
+								else {
+									$sql = "SELECT id, title, duration, tags, link, rating, author FROM videos ORDER BY rating DESC, id ASC LIMIT " . $p . ", " . $showCount;
+								}
+
+								if($stmt = mysqli_prepare($link, $sql)) {
+
+									// Attempt to execute the prepared statement
+									if(mysqli_stmt_execute($stmt)) {
+										/* bind result variables */
+										mysqli_stmt_bind_result($stmt, $id, $title, $duration, $tags, $URLlink, $rating, $author);
+
+										/* fetch values */
+										while (mysqli_stmt_fetch($stmt)) {
+											//Works!
+											$dataArray[$row] = array($id, $title, $duration, $tags, $URLlink, $rating, $author);
+											$row++;
+											//echo($row);
+    											
+											//printf ("%s " . " %s " . " %d " . "%s " . "%s " . " %s\n", $title, $duration, $tags, $URLlink, $rating, $author);
+										}
+									} else {
+										echo "Oops! Something went wrong. Please try again later.";
+									}
+								}
+
+								// Close statement
+								mysqli_stmt_close($stmt);
+								//extract the relevant videos from the database and display it on screen
+								
+								$nextLeft = true;
+								$i = 0;
+								while (($i < $showCount) && ($i < $row)) {
+									
+									if($nextLeft) {
+										?>
+										<div class="splitLeft">
+								<?php
+										$nextLeft = false;
+									}	
+									else {
+										?>
+										<div class="splitRight">
+								<?php
+										$nextLeft = true;
+									}		
+								?>
+							<p>
+								<?php
+									//mask for each tag - bitwise AND: if( ($mask & $tags ) == $mask) {
+										
+									//}
+						
+									//title
+									if(strlen($dataArray[$i][1]) > 50) {
+										$last_word_start = strrpos(substr($dataArray[$i][1], 0, 50), " "); //strrpos = position / substr = sub string
+										echo substr($dataArray[$i][1], 0, $last_word_start); //echo only substring to manage title length
+									}
+									else {
+										echo $dataArray[$i][1];
+									}
+								?>
+								<br />
+								Author: <?php echo $dataArray[$i][6]; ?>
+								<br />
+								Video Length:  
+								<?php 
+									if ($dataArray[$i][2] < 1000) {
+										echo substr($dataArray[$i][2], 0, 1) . ":" . substr($dataArray[$i][2], -2);
+									}
+									else {
+										echo substr($dataArray[$i][2], 0, 2) . ":" . substr($dataArray[$i][2], -2);
+									}
+								
+								?>
+								<!--<br />
+								Tags: Light Rain - Heavy Rain - Storm - Windy - Overcast - Sunset - Sunrise - Waterfall - Underwater - Sunny - Snow
+								-->
+								<br />
+								<?php 
+									//tagsList
+									//Sunrise, Sunset, Rain, Windy, Sunny, Underwater, Snow
+									//4,7
+									//5, 7
+									//7
+									//6,7
+									//4,7
+
+									$numTags = 0;
+									$tagsBin = decbin($dataArray[$i][3]);
+									$maskArray = array(0b0000000000000001, 0b0000000000000010, 0b0000000000000100, 0b0000000000001000, 0b0000000000010000, 0b0000000000100000, 0b0000000001000000, 0b0000000010000000);
+									for($j = 0; $j < count($maskArray); $j++)
+									{
+										if ($tagsBin & $maskArray[$j])// && $numTags <= 5)
+										{
+											switch($j) {
+												case 0:
+													//
+													//echo ("Sunrise ");
+													?><img style="img-text" src="./img/tags/sunrise.jpg" /> <?php
+													break;
+												case 1:
+													//
+													//echo ("Sunset ");
+													?><img style="img-text" src="./img/tags/sunset.jpg" /> <?php
+													break;
+												case 2:
+													//
+													//echo ("Rain ");
+													?><img style="img-text" src="./img/tags/rain.jpg" /> <?php
+													break;
+												case 3:
+													//
+													//echo ("Windy ");
+													?><img style="img-text" src="./img/tags/windy.jpg" /> <?php
+													break;
+												case 4:
+													//
+													//echo ("Sunny "); 
+													?><img style="img-text" src="./img/tags/sunny.jpg" /> <?php
+													break;
+												case 5:
+													//
+													//echo ("Underwater ");
+													?><img style="img-text" src="./img/tags/underwater.jpg" /> <?php
+													break;
+												case 6:
+													//
+													//echo ("Snow ");
+													?><img style="img-text" src="./img/tags/snow.jpg" /> <?php
+													break;
+												case 7:
+													//
+													//echo ("360 ");
+											?><img style="img-text" src="./img/tags/360.jpg" /> <?php
+													break;
+											}
+											$numTags++;
+										}
+									}
+									//echo($tagsBin);
+									?>
+								<br />
+								<br /><!--https://www.youtube.com/embed/L8l3PDb63Dk-->
+								<iframe width="350" height="215" src="https://www.youtube.com/embed/<?php echo $dataArray[$i][4]; ?>?loop=1&playlist=<?php echo $dataArray[$i][4]; ?>" <!--frameborder="0" allow="autoplay; encrypted-media" allowfullscreen-->></iframe>
+								<br /><br />
+							
+							</p>
+							
+						</div>
+											
+						<?php 		$i++;
+								}
+							mysqli_close($link);
+						?>
+						<div class="whole">
+							<div class="center">
+								<?php 
+									//display page numbers to search through library
+									$i = 1;
+									while($i <= $numPages) {
+										?>
+										<a href="index.php?page=home&search=<?php echo $search; ?>&p=<?php echo ($i*$showCount)-$showCount; ?>" 
+										   <?php
+											if ($p == (($i*$showCount)-$showCount)) {
+											?>
+										   class="current"
+										   <?php 
+											}
+											?>
+										   >
+										<?php
+										echo ($i);
+											?></a> 
+										<?php
+										$i++;
+									}
+								?>
+							</div>		
+						</div>
+						<!--
+						<div class="splitLeft">
+							<p>Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum</p>
+							
+						</div>
+
+						<div class="splitRight">
+							<p>Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum</p>
+						</div>
+						-->
+					</div>
+				</div>
+				<div class="mainGap"></div>
+				<div class="main">
+					<div class="mainText">
+						<h1>Timer</h1>
+						<p><!-- form for timer: dropdown 5-10-15-20-30-45-60 minutes-->
+							<!-- set, stop, reset -->
+							<!-- the remaining time should be displayed here - javascript used to store (that it stays when changing pages) and update it-->
+							<select class="form-select" name="timerSelect" id="timerSelect" onchange="changeFunc()">
+							  <option value="stop">Stopped</option>
+							  <option value="1">1 minute</option>
+							  <option value="5">5 minutes</option>
+							  <option value="10">10 minutes</option>
+							  <option value="15">15 minutes</option>
+							  <option value="20">20 minutes</option>
+							  <option value="30">30 minutes</option>
+							  <option value="45">45 minutes</option>
+							  <option value="60">60 minutes</option>
+							</select>
+							<p id="timer">
+							</p>
+						</p>
+						<br /><br />
+					</div>
+				</div>
+				<script>
+				function strcmp(a, b)
+				{   
+					return (a<b?-1:(a>b?1:0));  
+				}
+				// Set the date we're counting down to
+				var select = document.getElementById("timerSelect");
+				document.getElementById("timer").innerHTML = "Stopped";
+				
+					
+				select.onchange = function()
+				{
+					select.disabled = true;
+					var selectedString = select.options[select.selectedIndex].value;
+					//if(selectedString.localeCompare("stop") == 0) {
+						//break;
+					//}
+					var countdownNumber = parseInt(selectedString);
+					//alert(selectedString);
+					//var countDownDate = new Date().getTime() + (30*60*1000);
+					var countDownDate = new Date().getTime() + (countdownNumber*60*1000);
+
+					// Update the count down every 1 second
+					var x = setInterval(function() {
+						//if(strcmp(selectedString, select.options[select.selectedIndex].value) != 0) {
+							//break;
+						//}
+						//if (!executed) {
+							//break;
+						//}
+					  // Get todays date and time
+					  var now = new Date().getTime();
+
+					  // Find the distance between now an the count down date
+					  var distance = countDownDate - now;
+
+					  // Time calculations for days, hours, minutes and seconds
+					  var days = Math.floor(distance / (1000 * 60 * 60 * 24));
+					  var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+					  var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+					  var seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+					  // Display the result in the element with id="demo"
+					  document.getElementById("timer").innerHTML = //days + "d " + hours + "h " + 
+						  minutes + "m " + seconds + "s ";
+
+					  // If the count down is finished, write some text 
+					  if (distance < 0) {
+						clearInterval(x);
+						document.getElementById("timer").innerHTML = "EXPIRED" + countdownNumber;
+						alert("Time Up - have a great day!");
+					  }
+					}, 1000);
+				}
+				
+				var search = document.getElementById("searchSelect");
+					
+				search.onchange = function()
+				{
+					var selectedVal = search.options[search.selectedIndex].value;
+					window.location.href = 'index.php?page=home&search=' + selectedVal + '&p=0';
+				}
+				</script>
