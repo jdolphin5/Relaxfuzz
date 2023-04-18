@@ -1,1 +1,2 @@
-db-secret/config.php
+db/config.php
+db/sess_mySessionID
