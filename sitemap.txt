@@ -1,8 +1,0 @@
-http://www.relaxfuzz.com/
-http://www.relaxfuzz.com/index.php
-http://www.relaxfuzz.com/index.php?page=home
-http://www.relaxfuzz.com/index.php?page=about
-http://www.relaxfuzz.com/index.php?page=contact
-http://www.relaxfuzz.com/index.php?page=home&p=0
-http://www.relaxfuzz.com/index.php?page=home&p=4
-http://www.relaxfuzz.com/index.php?page=home&p=8
