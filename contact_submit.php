@@ -17,7 +17,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 	$username = test_input($_POST["username"]);
 	//check if name only contains letters and whitespace
 	if (!preg_match("/^[a-zA-Z]*$/",$username)) {
-		$username_error = "Only letters and whitespace allowed";
+		$username_error = "Only letters and spaces allowed";
 	}
 	else if(empty($username)) {
 		$username_error = "Username Empty";
@@ -51,7 +51,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 		$to = 'admin@relaxfuzz.com';
 		$subject = 'RelaxFuzz Contact Form - ' . $email;
 		if (mail($to, $subject, $message_body)) {
-			$success = "Message sent. We will endeavour to get back to you within 48 hours";
+			$success = "Message sent. We will endeavour to get back to you as soon as possible.";
 			$username = $email = $message = '';
 			header("location: index.php?page=contact");
 		}
